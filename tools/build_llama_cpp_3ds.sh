@@ -195,7 +195,21 @@ replace("src/llama-vocab.cpp",
 # Force the registry entrypoint to retain C linkage with devkitARM's headers.
 replace("ggml/src/ggml-cpu/ggml-cpu.cpp",
 """ggml_backend_reg_t ggml_backend_cpu_reg(void) {""",
-"""extern "C" ggml_backend_reg_t ggml_backend_cpu_reg(void) {""")
+"""static ggml_backend_reg_t ggml_backend_cpu_reg_impl_3ds(void) {""")
+
+replace("ggml/src/ggml-cpu/ggml-cpu.cpp",
+"""    return &ggml_backend_cpu_reg;
+}
+
+GGML_BACKEND_DL_IMPL(ggml_backend_cpu_reg)""",
+"""    return &ggml_backend_cpu_reg;
+}
+
+extern "C" ggml_backend_reg_t ggml_backend_cpu_reg(void) {
+    return ggml_backend_cpu_reg_impl_3ds();
+}
+
+GGML_BACKEND_DL_IMPL(ggml_backend_cpu_reg)""")
 PY
 
 rm -rf "$BUILD"
