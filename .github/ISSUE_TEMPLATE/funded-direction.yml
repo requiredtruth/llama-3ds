@@ -1,0 +1,50 @@
+name: Funded direction
+description: Request a development direction associated with a confirmed public donation transaction.
+title: "[Funded direction] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form only for a **confirmed inbound donation** to one of the public addresses in SUPPORT.md.
+        Do not post private keys, seed phrases, wallet signatures, passwords, or exchange credentials.
+
+  - type: dropdown
+    id: asset
+    attributes:
+      label: Asset
+      options:
+        - Bitcoin (BTC)
+        - Ethereum / EVM asset
+        - Dogecoin (DOGE)
+    validations:
+      required: true
+
+  - type: input
+    id: network
+    attributes:
+      label: Exact network
+      placeholder: e.g. Bitcoin mainnet, Ethereum mainnet
+    validations:
+      required: true
+
+  - type: input
+    id: txhash
+    attributes:
+      label: Public transaction hash
+      description: The transaction must be publicly verifiable and confirmed.
+    validations:
+      required: true
+
+  - type: textarea
+    id: request
+    attributes:
+      label: Requested development direction
+      description: Describe the feature, test, documentation area, or project direction you would like expanded.
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        The first issue claiming an otherwise unclaimed confirmed inbound transaction hash receives operational request attribution for that transaction. This is not cryptographic proof of wallet ownership. A donation does not purchase ownership, investment returns, a delivery deadline, or guaranteed acceptance.
