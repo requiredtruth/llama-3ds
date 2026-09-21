@@ -157,6 +157,12 @@ void llama_model_saver::add_kv(const enum llm_kv key, const int value) {
     gguf_set_val_i32(gguf_ctx, llm_kv(key).c_str(), static_cast<int32_t>(value));
 }
 #endif""")
+
+replace("src/llama-model.cpp",
+"""                            return -1;
+                        };""",
+"""                            return static_cast<decltype(hparams.n_layer_kv_from_start)>(-1);
+                        };""")
 PY
 
 rm -rf "$BUILD"
