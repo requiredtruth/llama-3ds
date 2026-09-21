@@ -119,6 +119,10 @@ replace("src/llama-grammar.cpp",
 replace("src/llama-kv-cache.cpp",
 """    const uint32_t n_pad_cur = std::max(n_pad, 256u);""",
 """    const uint32_t n_pad_cur = std::max<uint32_t>(n_pad, 256);""")
+
+replace("src/llama-kv-cache-msa.cpp",
+"""    const uint32_t n_pad_cur = std::max(kv->get_n_pad(), 256u);""",
+"""    const uint32_t n_pad_cur = std::max<uint32_t>(kv->get_n_pad(), 256);""")
 PY
 
 rm -rf "$BUILD"
