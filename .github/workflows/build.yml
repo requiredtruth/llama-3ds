@@ -13,9 +13,7 @@ jobs:
     container: devkitpro/devkitarm:20260610
     steps:
       - uses: actions/checkout@v4
-      - name: Cross-build pinned llama.cpp core
-        run: bash tools/build_llama_cpp_3ds.sh
-      - name: Build llama-3ds.3dsx
+      - name: Build pinned llama.cpp and llama-3ds
         run: make -j2
       - name: Verify artifact
         run: |
