@@ -52,3 +52,19 @@ index 4df94f8..0000000 100644
 +}
 +
 +#elif defined(_WIN32)
+
+diff --git a/ggml/src/ggml-backend-reg.cpp b/ggml/src/ggml-backend-reg.cpp
+index 0000000..0000000 100644
+--- a/ggml/src/ggml-backend-reg.cpp
++++ b/ggml/src/ggml-backend-reg.cpp
+@@ -9,7 +9,9 @@
+ #include <vector>
+ #include <cctype>
+ 
+-#ifdef _WIN32
++#if defined(__3DS__)
++#    include <unistd.h>
++#elif defined(_WIN32)
+ #    define WIN32_LEAN_AND_MEAN
+ #    ifndef NOMINMAX
+ #        define NOMINMAX
