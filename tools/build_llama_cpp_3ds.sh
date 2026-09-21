@@ -89,6 +89,12 @@ replace("ggml/src/ggml-backend-reg.cpp",
 #    include <unistd.h>
 #elif defined(_WIN32)
 #    define WIN32_LEAN_AND_MEAN""")
+
+# devkitARM defines uint32_t as unsigned long on this ABI, while this upstream
+# model helper hard-codes unsigned int. Make the template type explicit.
+replace("src/models/bailingmoe3.cpp",
+"""std::max(1u, hparams.n_expert_shared)""",
+"""std::max<decltype(hparams.n_expert_shared)>(1, hparams.n_expert_shared)""")
 PY
 
 rm -rf "$BUILD"
