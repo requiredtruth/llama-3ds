@@ -163,6 +163,26 @@ replace("src/llama-model.cpp",
                         };""",
 """                            return static_cast<decltype(hparams.n_layer_kv_from_start)>(-1);
                         };""")
+
+replace("src/llama-sampler.cpp",
+"""    k = std::min(k, (int) cur_p->size);""",
+"""    k = std::min<int32_t>(k, static_cast<int32_t>(cur_p->size));""")
+
+replace("src/llama-sampler.cpp",
+"""    penalty_last_n = std::max(penalty_last_n, 0);""",
+"""    penalty_last_n = std::max<int32_t>(penalty_last_n, 0);""")
+
+replace("src/llama-sampler.cpp",
+"""    int last_n_repeat = std::min((int) ctx->last_tokens.size(), ctx->dry_penalty_last_n);""",
+"""    int last_n_repeat = std::min<int>(static_cast<int>(ctx->last_tokens.size()), static_cast<int>(ctx->dry_penalty_last_n));""")
+
+replace("src/llama-sampler.cpp",
+"""    dry_penalty_last_n = std::max(dry_penalty_last_n, 0);""",
+"""    dry_penalty_last_n = std::max<int32_t>(dry_penalty_last_n, 0);""")
+
+replace("src/llama-sampler.cpp",
+"""    data.n_sample    = std::max(0, ctx->n_sample);""",
+"""    data.n_sample    = std::max<int32_t>(0, ctx->n_sample);""")
 PY
 
 rm -rf "$BUILD"
