@@ -26,7 +26,7 @@ static void wait_back(){ while(aptMainLoop()){ hidScanInput(); if(hidKeysDown()&
 static void wrapped(const std::string& s,int width=48,int maxlines=5){ int col=0,lines=0; for(char c:s){ if(lines>=maxlines) break; if(c=='\n'||col>=width){ std::putchar('\n'); lines++; col=0; if(c=='\n') continue; if(lines>=maxlines) break; } std::putchar(c); col++; } std::putchar('\n'); }
 
 static void home(int sel,const Runtime& rt,bool net){
-    consoleClear(); std::printf("llama-3ds v0.2.1\nNew 3DS / New 2DS XL local LLM\n\n");
+    consoleClear(); std::printf("llama-3ds v0.2.2\nNew 3DS / New 2DS XL local LLM\n\n");
     const char* items[]={"Models / Download","Chat","System / Memory","About"};
     for(int i=0;i<4;i++) std::printf("%c %s\n",sel==i?'>':' ',items[i]);
     std::printf("\nRuntime: %s\nNetwork: %s\n\nD-Pad move  A select  START exit\n",rt.loaded()?"MODEL LOADED":"no model",net?"HTTP ready":"unavailable");
@@ -93,7 +93,7 @@ static void chat(Runtime& rt){
 
 int main(int,char**){
     gfxInitDefault(); consoleInit(GFX_TOP,nullptr); osSetSpeedupEnable(true); llama3ds::ensure_directories();
-    Result h=httpcInit(0); bool net=R_SUCCEEDED(h); llama3ds::Runtime runtime; int sel=0;
+    Result h=httpcInit(0x4000); bool net=R_SUCCEEDED(h); llama3ds::Runtime runtime; int sel=0;
     llama3ds::home(sel,runtime,net);
     while(aptMainLoop()){
         llama3ds::frame(); hidScanInput(); u32 d=hidKeysDown();
