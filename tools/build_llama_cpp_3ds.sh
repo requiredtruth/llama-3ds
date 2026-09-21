@@ -183,6 +183,14 @@ replace("src/llama-sampler.cpp",
 replace("src/llama-sampler.cpp",
 """    data.n_sample    = std::max(0, ctx->n_sample);""",
 """    data.n_sample    = std::max<int32_t>(0, ctx->n_sample);""")
+
+# llama_token is int32_t (long on devkitARM), not plain int.
+replace("src/llama-vocab.cpp",
+"""        const std::vector<int> ids = tokenize("\\n", false);""",
+"""        const std::vector<llama_token> ids = tokenize("\\n", false);""")
+replace("src/llama-vocab.cpp",
+"""        const std::vector<int> ids = tokenize("\\n", false);""",
+"""        const std::vector<llama_token> ids = tokenize("\\n", false);""")
 PY
 
 rm -rf "$BUILD"
