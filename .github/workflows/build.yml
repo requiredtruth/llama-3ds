@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,10 +16,37 @@ jobs:
       - name: Build llama-3ds.3dsx
         run: make -j2
       - name: Verify artifact
-        run: test -s llama-3ds.3dsx
+        run: |
+          test -s llama-3ds.3dsx
+          test -s llama-3ds.smdh
       - uses: actions/upload-artifact@v4
         with:
           name: llama-3ds-3dsx
           path: |
             llama-3ds.3dsx
             llama-3ds.smdh
+
+  release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: llama-3ds-3dsx
+          path: release
+      - name: Create checksum
+        run: |
+          cd release
+          sha256sum llama-3ds.3dsx llama-3ds.smdh > SHA256SUMS
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="$(cat VERSION)"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; leaving it unchanged."
+            exit 0
+          fi
+          gh release create "$TAG"             release/llama-3ds.3dsx             release/llama-3ds.smdh             release/SHA256SUMS             --target "$GITHUB_SHA"             --title "llama-3ds $TAG"             --notes "Compiled and verified Nintendo 3DS Homebrew Launcher build."
