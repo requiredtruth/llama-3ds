@@ -10,7 +10,7 @@ include $(DEVKITARM)/3ds_rules
 TARGET := llama-3ds
 BUILD := build
 SOURCES := source
-INCLUDES := $(TOPDIR)/include $(TOPDIR)/.deps/llama.cpp/include $(TOPDIR)/.deps/llama.cpp/ggml/include
+INCLUDES := $(TOPDIR)/include $(TOPDIR)/.deps/llama.cpp/include $(TOPDIR)/.deps/llama.cpp/ggml/include $(TOPDIR)/.deps/llama.cpp/ggml/src $(TOPDIR)/.deps/llama.cpp/ggml/src/ggml-cpu
 
 APP_TITLE := llama-3ds
 APP_DESCRIPTION := Local llama.cpp chat for New Nintendo 3DS/2DS XL
