@@ -36,12 +36,18 @@ DownloadResult download_verified(const std::string& url,const std::string& final
         if(R_FAILED(rc)){ out.message="HTTP open failed"; return out; }
         opened=true;
         httpcSetSSLOpt(&ctx,SSLCOPT_DisableVerify);
-        httpcSetKeepAlive(&ctx,HTTPC_KEEPALIVE_ENABLED);
-        httpcAddRequestHeaderField(&ctx,"User-Agent","llama-3ds/0.2");
+        httpcAddRequestHeaderField(&ctx,"User-Agent","llama-3ds/0.2.2");
+        httpcAddRequestHeaderField(&ctx,"Accept","application/octet-stream");
+        httpcAddRequestHeaderField(&ctx,"Connection","close");
         if(resume){ char range[64]; std::snprintf(range,sizeof(range),"bytes=%llu-",(unsigned long long)resume); httpcAddRequestHeaderField(&ctx,"Range",range); }
         rc=httpcBeginRequest(&ctx);
         if(R_FAILED(rc)){ httpcCloseContext(&ctx); out.message="HTTP begin failed"; return out; }
-        if(R_FAILED(httpcGetResponseStatusCode(&ctx,&status))){ httpcCancelConnection(&ctx); httpcCloseContext(&ctx); out.message="HTTP status failed"; return out; }
+        rc=httpcGetResponseStatusCode(&ctx,&status);
+        if(R_FAILED(rc)){
+            httpcCancelConnection(&ctx); httpcCloseContext(&ctx); opened=false;
+            char detail[64]; std::snprintf(detail,sizeof(detail),"HTTP status failed: 0x%08lX",(unsigned long)rc);
+            out.message=detail; return out;
+        }
         if((status>=301&&status<=303)||status==307||status==308){
             char location[4096]{};
             rc=httpcGetResponseHeader(&ctx,"Location",location,sizeof(location));
