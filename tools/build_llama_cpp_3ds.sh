@@ -95,6 +95,10 @@ replace("ggml/src/ggml-backend-reg.cpp",
 replace("src/models/bailingmoe3.cpp",
 """std::max(1u, hparams.n_expert_shared)""",
 """std::max<decltype(hparams.n_expert_shared)>(1, hparams.n_expert_shared)""")
+
+replace("src/llama-batch.cpp",
+"""            int seq_id_max = 0;""",
+"""            llama_seq_id seq_id_max = 0;""")
 PY
 
 rm -rf "$BUILD"
