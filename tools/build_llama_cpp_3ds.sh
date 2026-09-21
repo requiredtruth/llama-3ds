@@ -191,6 +191,11 @@ replace("src/llama-vocab.cpp",
 replace("src/llama-vocab.cpp",
 """        const std::vector<int> ids = tokenize("\\n", false);""",
 """        const std::vector<llama_token> ids = tokenize("\\n", false);""")
+
+# Force the registry entrypoint to retain C linkage with devkitARM's headers.
+replace("ggml/src/ggml-cpu/ggml-cpu.cpp",
+"""ggml_backend_reg_t ggml_backend_cpu_reg(void) {""",
+"""extern "C" ggml_backend_reg_t ggml_backend_cpu_reg(void) {""")
 PY
 
 rm -rf "$BUILD"
