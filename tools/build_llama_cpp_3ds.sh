@@ -123,6 +123,40 @@ replace("src/llama-kv-cache.cpp",
 replace("src/llama-kv-cache-msa.cpp",
 """    const uint32_t n_pad_cur = std::max(kv->get_n_pad(), 256u);""",
 """    const uint32_t n_pad_cur = std::max<uint32_t>(kv->get_n_pad(), 256);""")
+
+# devkitARM's int32_t is long, so plain int is a distinct type. Upstream
+# assumes they are identical in GGUF metadata and saver overload resolution.
+replace("src/llama-model-loader.cpp",
+"""    template<> struct GKV_Base<int32_t     >: GKV_Base_Type<int32_t,      GGUF_TYPE_INT32,   gguf_get_val_i32 > {};""",
+"""    template<> struct GKV_Base<int32_t     >: GKV_Base_Type<int32_t,      GGUF_TYPE_INT32,   gguf_get_val_i32 > {};
+#ifdef __3DS__
+    template<> struct GKV_Base<int> {
+        static constexpr gguf_type gt = GGUF_TYPE_INT32;
+        static int getter(const gguf_context * ctx, const int kid) {
+            return static_cast<int>(gguf_get_val_i32(ctx, kid));
+        }
+    };
+#endif""")
+
+replace("src/llama-model-saver.h",
+"""    void add_kv(enum llm_kv key, int32_t      value);""",
+"""    void add_kv(enum llm_kv key, int32_t      value);
+#ifdef __3DS__
+    void add_kv(enum llm_kv key, int          value);
+#endif""")
+
+replace("src/llama-model-saver.cpp",
+"""void llama_model_saver::add_kv(const enum llm_kv key, const int32_t value) {
+    gguf_set_val_i32(gguf_ctx, llm_kv(key).c_str(), value);
+}""",
+"""void llama_model_saver::add_kv(const enum llm_kv key, const int32_t value) {
+    gguf_set_val_i32(gguf_ctx, llm_kv(key).c_str(), value);
+}
+#ifdef __3DS__
+void llama_model_saver::add_kv(const enum llm_kv key, const int value) {
+    gguf_set_val_i32(gguf_ctx, llm_kv(key).c_str(), static_cast<int32_t>(value));
+}
+#endif""")
 PY
 
 rm -rf "$BUILD"
