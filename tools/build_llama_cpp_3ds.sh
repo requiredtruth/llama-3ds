@@ -99,6 +99,22 @@ replace("src/models/bailingmoe3.cpp",
 replace("src/llama-batch.cpp",
 """            int seq_id_max = 0;""",
 """            llama_seq_id seq_id_max = 0;""")
+
+replace("src/llama-context.cpp",
+"""    cparams.n_seq_max = std::max(1u, params.n_seq_max);""",
+"""    cparams.n_seq_max = std::max<decltype(params.n_seq_max)>(1, params.n_seq_max);""")
+
+replace("src/llama-context.cpp",
+"""    data.n_p_eval    = std::max(1, n_p_eval);
+    data.n_eval      = std::max(1, n_eval);
+    data.n_reused    = std::max(0, n_reused);""",
+"""    data.n_p_eval    = std::max<decltype(n_p_eval)>(1, n_p_eval);
+    data.n_eval      = std::max<decltype(n_eval)>(1, n_eval);
+    data.n_reused    = std::max<decltype(n_reused)>(0, n_reused);""")
+
+replace("src/llama-grammar.cpp",
+"""            n_prev_rules = std::max(1u, (uint32_t)symbol_ids.size() - n_rules_before);""",
+"""            n_prev_rules = std::max<uint64_t>(1, static_cast<uint64_t>(symbol_ids.size()) - n_rules_before);""")
 PY
 
 rm -rf "$BUILD"
