@@ -115,6 +115,10 @@ replace("src/llama-context.cpp",
 replace("src/llama-grammar.cpp",
 """            n_prev_rules = std::max(1u, (uint32_t)symbol_ids.size() - n_rules_before);""",
 """            n_prev_rules = std::max<uint64_t>(1, static_cast<uint64_t>(symbol_ids.size()) - n_rules_before);""")
+
+replace("src/llama-kv-cache.cpp",
+"""    const uint32_t n_pad_cur = std::max(n_pad, 256u);""",
+"""    const uint32_t n_pad_cur = std::max<uint32_t>(n_pad, 256);""")
 PY
 
 rm -rf "$BUILD"
