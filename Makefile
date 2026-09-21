@@ -22,7 +22,7 @@ CFLAGS += $(INCLUDE) -D__3DS__
 CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++17
 ASFLAGS := -g $(ARCH)
 LDFLAGS := -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map) -Wl,--gc-sections
-LIBS := -Wl,--start-group -lllama -lggml -lggml-cpu -lggml-base -Wl,--end-group -lctru -lm
+LIBS := -Wl,--start-group -lllama -lggml -Wl,--whole-archive -lggml-cpu -Wl,--no-whole-archive -lggml-base -Wl,--end-group -lctru -lm
 LIBDIRS := $(CTRULIB) $(TOPDIR)/.deps/llama-build-3ds/src $(TOPDIR)/.deps/llama-build-3ds/ggml/src $(TOPDIR)/.deps/llama-build-3ds/ggml/src/ggml-cpu
 
 ifneq ($(BUILD),$(notdir $(CURDIR)))
