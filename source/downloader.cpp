@@ -17,6 +17,7 @@ void progress(std::uint64_t done,std::uint64_t total){
     std::printf("\nB: pause download (resume later)\n");
     gfxFlushBuffers(); gfxSwapBuffers(); gspWaitForVBlank();
 }
+std::string rc_message(const char* step,Result rc){ char detail[80]; std::snprintf(detail,sizeof(detail),"%s failed: 0x%08lX",step,(unsigned long)rc); return detail; }
 }
 
 DownloadResult download_verified(const std::string& url,const std::string& final_path,const std::string& expected){
@@ -33,37 +34,47 @@ DownloadResult download_verified(const std::string& url,const std::string& final
 
     for(int redirects=0;redirects<8;redirects++){
         Result rc=httpcOpenContext(&ctx,HTTPC_METHOD_GET,current.c_str(),1);
-        if(R_FAILED(rc)){ out.message="HTTP open failed"; return out; }
+        if(R_FAILED(rc)){ out.message=rc_message("HTTP open",rc); return out; }
         opened=true;
-        httpcSetSSLOpt(&ctx,SSLCOPT_DisableVerify);
-        httpcAddRequestHeaderField(&ctx,"User-Agent","llama-3ds/0.2.2");
-        httpcAddRequestHeaderField(&ctx,"Accept","application/octet-stream");
-        httpcAddRequestHeaderField(&ctx,"Connection","close");
-        if(resume){ char range[64]; std::snprintf(range,sizeof(range),"bytes=%llu-",(unsigned long long)resume); httpcAddRequestHeaderField(&ctx,"Range",range); }
+        rc=httpcSetSSLOpt(&ctx,SSLCOPT_DisableVerify);
+        if(R_FAILED(rc)){ httpcCloseContext(&ctx); out.message=rc_message("HTTP SSL setup",rc); return out; }
+        rc=httpcSetKeepAlive(&ctx,HTTPC_KEEPALIVE_ENABLED);
+        if(R_FAILED(rc)){ httpcCloseContext(&ctx); out.message=rc_message("HTTP keep-alive",rc); return out; }
+        rc=httpcAddRequestHeaderField(&ctx,"User-Agent","llama-3ds/0.2.3");
+        if(R_FAILED(rc)){ httpcCloseContext(&ctx); out.message=rc_message("HTTP user-agent",rc); return out; }
+        rc=httpcAddRequestHeaderField(&ctx,"Accept","application/octet-stream");
+        if(R_FAILED(rc)){ httpcCloseContext(&ctx); out.message=rc_message("HTTP accept header",rc); return out; }
+        rc=httpcAddRequestHeaderField(&ctx,"Connection","Keep-Alive");
+        if(R_FAILED(rc)){ httpcCloseContext(&ctx); out.message=rc_message("HTTP connection header",rc); return out; }
+        if(resume){
+            char range[64]; std::snprintf(range,sizeof(range),"bytes=%llu-",(unsigned long long)resume);
+            rc=httpcAddRequestHeaderField(&ctx,"Range",range);
+            if(R_FAILED(rc)){ httpcCloseContext(&ctx); out.message=rc_message("HTTP range header",rc); return out; }
+        }
         rc=httpcBeginRequest(&ctx);
-        if(R_FAILED(rc)){ httpcCloseContext(&ctx); out.message="HTTP begin failed"; return out; }
+        if(R_FAILED(rc)){ httpcCloseContext(&ctx); out.message=rc_message("HTTP begin",rc); return out; }
         rc=httpcGetResponseStatusCode(&ctx,&status);
         if(R_FAILED(rc)){
-            httpcCancelConnection(&ctx); httpcCloseContext(&ctx); opened=false;
-            char detail[64]; std::snprintf(detail,sizeof(detail),"HTTP status failed: 0x%08lX",(unsigned long)rc);
-            out.message=detail; return out;
+            httpcCloseContext(&ctx); opened=false;
+            out.message=rc_message("HTTP status",rc); return out;
         }
         if((status>=301&&status<=303)||status==307||status==308){
             char location[4096]{};
             rc=httpcGetResponseHeader(&ctx,"Location",location,sizeof(location));
-            httpcCancelConnection(&ctx); httpcCloseContext(&ctx); opened=false;
-            if(R_FAILED(rc)||!location[0]){ out.message="bad redirect"; return out; }
+            httpcCloseContext(&ctx); opened=false;
+            if(R_FAILED(rc)){ out.message=rc_message("HTTP redirect",rc); return out; }
+            if(!location[0]){ out.message="bad redirect: empty Location"; return out; }
             current=location; continue;
         }
         break;
     }
     if(!opened){ out.message="too many redirects"; return out; }
     const bool append=resume>0 && status==206;
-    if(status!=200 && status!=206){ httpcCancelConnection(&ctx); httpcCloseContext(&ctx); out.message="HTTP "+std::to_string(status); return out; }
+    if(status!=200 && status!=206){ httpcCloseContext(&ctx); out.message="HTTP "+std::to_string(status); return out; }
     if(!append) resume=0;
 
     FILE* f=std::fopen(part.c_str(),append?"ab":"wb");
-    if(!f){ httpcCancelConnection(&ctx); httpcCloseContext(&ctx); out.message="SD write open failed"; return out; }
+    if(!f){ httpcCloseContext(&ctx); out.message="SD write open failed"; return out; }
     u32 content=0; httpcGetDownloadSizeState(&ctx,nullptr,&content);
     std::uint64_t done=resume,total=content?resume+content:0;
     std::vector<u8> buf(32768);
@@ -76,7 +87,7 @@ DownloadResult download_verified(const std::string& url,const std::string& final
         done+=got; progress(done,total);
     } while(rc==(Result)HTTPC_RESULTCODE_DOWNLOADPENDING);
     std::fclose(f); httpcCloseContext(&ctx);
-    if(R_FAILED(rc)){ out.message="network read failed; partial kept"; return out; }
+    if(R_FAILED(rc)){ out.message=rc_message("network read",rc)+"; partial kept"; return out; }
 
     std::printf("\nVerifying SHA-256...\n");
     if(!verify(part,expected,why)){ std::remove(part.c_str()); out.message=why+"; bad file deleted"; return out; }
