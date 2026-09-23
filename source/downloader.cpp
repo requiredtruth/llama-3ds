@@ -40,7 +40,7 @@ DownloadResult download_verified(const std::string& url,const std::string& final
         if(R_FAILED(rc)){ httpcCloseContext(&ctx); out.message=rc_message("HTTP SSL setup",rc); return out; }
         rc=httpcSetKeepAlive(&ctx,HTTPC_KEEPALIVE_ENABLED);
         if(R_FAILED(rc)){ httpcCloseContext(&ctx); out.message=rc_message("HTTP keep-alive",rc); return out; }
-        rc=httpcAddRequestHeaderField(&ctx,"User-Agent","llama-3ds/0.2.3");
+        rc=httpcAddRequestHeaderField(&ctx,"User-Agent","llama-3ds/0.2.4");
         if(R_FAILED(rc)){ httpcCloseContext(&ctx); out.message=rc_message("HTTP user-agent",rc); return out; }
         rc=httpcAddRequestHeaderField(&ctx,"Accept","application/octet-stream");
         if(R_FAILED(rc)){ httpcCloseContext(&ctx); out.message=rc_message("HTTP accept header",rc); return out; }
@@ -56,7 +56,9 @@ DownloadResult download_verified(const std::string& url,const std::string& final
         rc=httpcGetResponseStatusCode(&ctx,&status);
         if(R_FAILED(rc)){
             httpcCloseContext(&ctx); opened=false;
-            out.message=rc_message("HTTP status",rc); return out;
+            out.message=rc==(Result)0xD8A0A03C
+                ? "3DS TLS certificate failure. Use Y and an http:// LAN model URL."
+                : rc_message("HTTP status",rc); return out;
         }
         if((status>=301&&status<=303)||status==307||status==308){
             char location[4096]{};

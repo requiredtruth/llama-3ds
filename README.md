@@ -37,12 +37,15 @@ No real-device tokens/second number is claimed until it has been measured on act
 4. Launch it with the Homebrew Launcher.
 5. Choose **Models / Download**, download/load a model, then open **Chat**.
 
+If a download reports `0xD8A0A03C`, the console's HTTP service could not verify the HTTPS certificate. On a computer on the same trusted Wi-Fi network, download the selected catalog GGUF, open a terminal in its directory, and run `python3 -m http.server 8000 --bind 0.0.0.0`. Find that computer's LAN IP, press **Y** on the matching model in the app, and enter `http://LAN-IP:8000/filename.gguf`. The app checks the catalog SHA-256 digest before accepting the file. Stop the server after the download; this temporary HTTP server has no authentication and should only be used on a trusted LAN. You can also copy the GGUF directly to `sd:/3ds/llama-3ds/models/` under the catalog filename and select it with **A** to verify and load it.
+
 ## Controls
 
 - D-Pad: move
 - A: select / type / send
 - B: back; while downloading, pause and keep the partial file
 - X: delete selected model or clear chat
+- Y: enter a trusted LAN HTTP URL for the selected catalog model
 - START: exit
 
 ## Build
