@@ -26,7 +26,7 @@ static void wait_back(){ while(aptMainLoop()){ hidScanInput(); if(hidKeysDown()&
 static void wrapped(const std::string& s,int width=48,int maxlines=5){ int col=0,lines=0; for(char c:s){ if(lines>=maxlines) break; if(c=='\n'||col>=width){ std::putchar('\n'); lines++; col=0; if(c=='\n') continue; if(lines>=maxlines) break; } std::putchar(c); col++; } std::putchar('\n'); }
 
 static void home(int sel,const Runtime& rt,bool net){
-    consoleClear(); std::printf("llama-3ds v0.2.3\nNew 3DS / New 2DS XL local LLM\n\n");
+    consoleClear(); std::printf("llama-3ds v0.2.4\nNew 3DS / New 2DS XL local LLM\n\n");
     const char* items[]={"Models / Download","Chat","System / Memory","About"};
     for(int i=0;i<4;i++) std::printf("%c %s\n",sel==i?'>':' ',items[i]);
     std::printf("\nRuntime: %s\nNetwork: %s\n\nD-Pad move  A select  START exit\n",rt.loaded()?"MODEL LOADED":"no model",net?"HTTP ready":"unavailable");
@@ -52,7 +52,7 @@ static void models(Runtime& rt,bool net){
         if(redraw){
             consoleClear(); std::printf("Models / Download\nSD: /3ds/llama-3ds/models\n\n");
             for(int i=0;i<count;i++){ std::string p=std::string(kModels)+"/"+catalog[i].filename; std::printf("%c [%c] %s\n",sel==i?'>':' ',exists(p)?'x':' ',catalog[i].title); }
-            std::printf("\n"); wrapped(catalog[sel].note,48,3); std::printf("\nA download/verify/load  X delete  B back\n");
+            std::printf("\n"); wrapped(catalog[sel].note,48,3); std::printf("\nA download/verify/load  Y LAN URL\nX delete  B back\n");
             redraw=false;
         }
         frame(); hidScanInput(); u32 d=hidKeysDown(); if(d&KEY_B) return;
@@ -60,6 +60,26 @@ static void models(Runtime& rt,bool net){
         if(d&KEY_DDOWN){ sel=(sel+1)%count; redraw=true; }
         const auto& m=catalog[sel]; std::string path=std::string(kModels)+"/"+m.filename;
         if(d&KEY_X){ rt.unload(); std::remove(path.c_str()); std::remove((path+".part").c_str()); redraw=true; }
+        if(d&KEY_Y){
+            SwkbdState kb; char address[256]{};
+            swkbdInit(&kb,SWKBD_TYPE_NORMAL,2,255);
+            swkbdSetHintText(&kb,"http://192.168.1.10:8000/model.gguf");
+            swkbdSetButton(&kb,SWKBD_BUTTON_LEFT,"Cancel",false);
+            swkbdSetButton(&kb,SWKBD_BUTTON_RIGHT,"Download",true);
+            if(swkbdInputText(&kb,address,sizeof(address))==SWKBD_BUTTON_RIGHT){
+                std::string url(address);
+                consoleClear();
+                if(url.rfind("http://",0)!=0) std::printf("Use an http:// LAN address.\n");
+                else if(!net) std::printf("HTTP service unavailable.\n");
+                else {
+                    std::remove((path+".part").c_str());
+                    auto r=download_verified(url,path,m.sha256);
+                    std::printf("\n%s\n",r.message.c_str());
+                }
+                wait_back();
+            }
+            redraw=true; continue;
+        }
         if(d&KEY_A){
             if(!exists(path)){
                 consoleClear(); std::printf("Download\n%s\n\n",m.title); frame();
